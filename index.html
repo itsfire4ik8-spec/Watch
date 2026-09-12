@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Minimal iPad Clock</title>
+    
+    <!-- iOS PWA Meta Tags for Standalone Web App Mode -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Часы">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@200;300;400;600&family=JetBrains+Mono:wght@200;400&family=Montserrat:wght@100;200;300;400&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* Fonts presets */
+        .font-sans { font-family: 'Inter', -apple-system, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-serif { font-family: 'Cinzel', serif; }
+        .font-light-custom { font-family: 'Montserrat', sans-serif; }
+
+        /* Main Container Layout */
+        .app-container {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            -webkit-align-items: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            padding: 40px 24px 30px 24px;
+            position: relative;
+        }
+
+        /* Top Header */
+        .header {
+            width: 100%;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            -webkit-align-items: flex-start;
+            align-items: flex-start;
+            z-index: 10;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .header-date {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-name {
+            font-size: 13px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #8E8E93;
+            font-weight: 300;
+        }
+
+        .full-date {
+            font-size: 16px;
+            color: #E5E5EA;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pill-badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #A1A1AA;
+            letter-spacing: 0.05em;
+        }
+
+        /* Clock Center Area */
+        .clock-main {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            width: 100%;
+            margin: auto 0;
+            z-index: 10;
+            cursor: pointer;
+            transition: opacity 0.4s ease, filter 0.4s ease;
+        }
+
+        .time-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 0.85;
+        }
+
+        .digit-hours, .digit-minutes {
+            font-size: 32vw;
+            font-weight: 200;
+            letter-spacing: -0.03em;
+            transition: color 0.4s ease, text-shadow 0.4s ease;
+            text-align: center;
+        }
+
+        .digit-hours {
+            color: #FFFFFF;
+        }
+
+        .digit-minutes {
+            color: #8E8E93;
+        }
+
+        .time-divider {
+            width: 65px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 24px 0;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .seconds-row {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .seconds-text {
+            font-size: 22px;
+            color: #7C7C80;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        .ampm-text {
+            font-size: 12px;
+            color: #55555E;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .greeting-text {
+            margin-top: 24px;
+            font-size: 12px;
+            letter-spacing: 0.3em;
+            color: #636366;
+            text-transform: uppercase;
+            font-weight: 300;
+            text-align: center;
+        }
+
+        .progress-track {
+            width: 200px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #8E8E93;
+            transition: width 1s linear, background-color 0.4s ease;
+        }
+
+        /* Bottom Controls Bar */
+        .footer {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 20;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(28, 28, 30, 0.85);
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: #D1D1D6;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.94);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-icon {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .hint-text {
+            font-size: 11px;
+            color: #48484A;
+            letter-spacing: 0.03em;
+        }
+
+        /* Night Mode Overlay State */
+        .night-dim {
+            opacity: 0.2 !important;
+            filter: grayscale(0.6);
+        }
+
+        /* UI Hide state */
+        .ui-hidden {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        .header.ui-hidden {
+            transform: translateY(-20px);
+        }
+
+        .footer.ui-hidden {
+            transform: translateY(20px);
+        }
+
+        /* Themes */
+        /* 0: OLED Black */
+        body.theme-0 { background-color: #000000; color: #FFFFFF; }
+        body.theme-0 .digit-hours { color: #FFFFFF; }
+        body.theme-0 .digit-minutes { color: #636366; }
+        body.theme-0 .time-divider { background: rgba(255, 255, 255, 0.2); }
+        body.theme-0 .progress-bar { background: #8E8E93; }
+
+        /* 1: Neon Cyan */
+        body.theme-1 { background-color: #030712; color: #22D3EE; }
+        body.theme-1 .digit-hours { color: #22D3EE; text-shadow: 0 0 35px rgba(34, 211, 238, 0.45); }
+        body.theme-1 .digit-minutes { color: #0891B2; }
+        body.theme-1 .time-divider { background: #22D3EE; box-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
+        body.theme-1 .progress-bar { background: #22D3EE; }
+
+        /* 2: Warm Amber */
+        body.theme-2 { background-color: #0C0A09; color: #F59E0B; }
+        body.theme-2 .digit-hours { color: #F59E0B; text-shadow: 0 0 35px rgba(245, 158, 11, 0.4); }
+        body.theme-2 .digit-minutes { color: #B45309; }
+        body.theme-2 .time-divider { background: #F59E0B; box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+        body.theme-2 .progress-bar { background: #F59E0B; }
+
+        /* 3: Minimal Light */
+        body.theme-3 { background-color: #F4F4F5; color: #18181B; }
+        body.theme-3 .digit-hours { color: #18181B; }
+        body.theme-3 .digit-minutes { color: #71717A; }
+        body.theme-3 .time-divider { background: #A1A1AA; }
+        body.theme-3 .progress-bar { background: #18181B; }
+        body.theme-3 .day-name { color: #71717A; }
+        body.theme-3 .full-date { color: #27272A; }
+        body.theme-3 .greeting-text { color: #71717A; }
+        body.theme-3 .seconds-text { color: #71717A; }
+        body.theme-3 .toolbar { background: rgba(224, 224, 230, 0.9); border-color: rgba(0,0,0,0.1); }
+        body.theme-3 .btn { background: rgba(0,0,0,0.06); color: #18181B; }
+        body.theme-3 .pill-badge { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #52525B; }
+    </style>
+</head>
+<body class="theme-0 font-sans" id="appBody">
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header" id="header">
+            <div class="header-date">
+                <span class="day-name" id="dayName">ПОНЕДЕЛЬНИК</span>
+                <span class="full-date" id="fullDate">12 СЕНТЯБРЯ</span>
+            </div>
+
+            <div class="header-info">
+                <span class="pill-badge hidden" id="weekBadge">НЕДЕЛЯ --</span>
+                <span class="pill-badge" id="batteryBadge">--%</span>
+            </div>
+        </header>
+
+        <!-- Clock Center -->
+        <main class="clock-main" id="clockMain">
+            <div class="time-box">
+                <div class="digit-hours" id="hours">12</div>
+                <div class="time-divider" id="divider"></div>
+                <div class="digit-minutes" id="minutes">45</div>
+            </div>
+
+            <div class="seconds-row">
+                <span class="seconds-text" id="seconds">00</span>
+                <span class="ampm-text" id="ampm"></span>
+            </div>
+
+            <div class="greeting-text" id="greeting">ДОБРЫЙ ДЕНЬ</div>
+
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </main>
+
+        <!-- Footer / Toolbar -->
+        <footer class="footer" id="footer">
+            <div class="toolbar">
+                <!-- Theme Button -->
+                <button class="btn" id="btnTheme" title="Тема">
+                    <svg class="btn-icon" viewBox="0 0 24 24">
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                    </svg>
+                </button>
+
+                <!-- Font Button -->
+                <button class="btn" id="btnFont" title="Шрифт" style="font-family: serif; font-weight: bold;">
+                    Aa
+                </button>
+
+                <!-- Night Dim Button -->
+                <button class="btn" id="btnNight" title="Ночь">
+                    <svg class="btn-icon" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- Seconds Toggle -->
+                <button class="btn" id="btnSeconds" style="font-family: monospace; font-size: 11px;">
+                    :SS
+                </button>
+
+                <!-- Format Toggle -->
+                <button class="btn" id="btnFormat" style="font-weight: 700; font-size: 11px;">
+                    24H
+                </button>
+            </div>
+            <div class="hint-text">Нажмите на экран, чтобы скрыть панели</div>
+        </footer>
+    </div>
+
+    <script>
+        // State management
+        var state = {
+            is24h: true,
+            showSeconds: true,
+            themeIndex: 0,
+            fontIndex: 0,
+            isNight: false,
+            uiVisible: true,
+            hideTimer: null
+        };
+
+        var fonts = ['font-sans', 'font-mono', 'font-serif', 'font-light-custom'];
+        var themesCount = 4;
+
+        // Elements
+        var appBody = document.getElementById('appBody');
+        var hoursEl = document.getElementById('hours');
+        var minutesEl = document.getElementById('minutes');
+        var secondsEl = document.getElementById('seconds');
+        var ampmEl = document.getElementById('ampm');
+        var dayNameEl = document.getElementById('dayName');
+        var fullDateEl = document.getElementById('fullDate');
+        var weekBadge = document.getElementById('weekBadge');
+        var batteryBadge = document.getElementById('batteryBadge');
+        var greetingEl = document.getElementById('greeting');
+        var progressBar = document.getElementById('progressBar');
+        var header = document.getElementById('header');
+        var footer = document.getElementById('footer');
+        var clockMain = document.getElementById('clockMain');
+
+        // Main Clock Update Function
+        function updateClock() {
+            var now = new Date();
+            var h = now.getHours();
+            var m = now.getMinutes();
+            var s = now.getSeconds();
+
+            if (!state.is24h) {
+                var isPm = h >= 12;
+                ampmEl.textContent = isPm ? 'PM' : 'AM';
+                h = h % 12;
+                if (h === 0) h = 12;
+            } else {
+                ampmEl.textContent = '';
+            }
+
+            var hoursStr = (h < 10 ? '0' : '') + h;
+            var minutesStr = (m < 10 ? '0' : '') + m;
+            var secondsStr = (s < 10 ? '0' : '') + s;
+
+            hoursEl.textContent = hoursStr;
+            minutesEl.textContent = minutesStr;
+            secondsEl.textContent = secondsStr;
+
+            // Minute progress
+            var progress = ((s / 60) * 100).toFixed(1);
+            progressBar.style.width = progress + '%';
+
+            // Dates in Russian
+            var days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+            var months = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
+
+            dayNameEl.textContent = days[now.getDay()];
+            fullDateEl.textContent = now.getDate() + ' ' + months[now.getMonth()];
+
+            // Week Number calculation
+            var firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+            var pastDays = (now - firstDayOfYear) / 86400000;
+            var weekNum = Math.ceil((pastDays + firstDayOfYear.getDay() + 1) / 7);
+            weekBadge.textContent = 'НЕДЕЛЯ ' + weekNum;
+
+            // Dynamic Greeting
+            var rawH = now.getHours();
+            if (rawH >= 5 && rawH < 12) greetingEl.textContent = 'ДОБРОЕ УТРО';
+            else if (rawH >= 12 && rawH < 18) greetingEl.textContent = 'ДОБРЫЙ ДЕНЬ';
+            else if (rawH >= 18 && rawH < 23) greetingEl.textContent = 'ДОБРЫЙ ВЕЧЕР';
+            else greetingEl.textContent = 'ДОБРОЙ НОЧИ';
+        }
+
+        // Apply Theme & Font
+        function applySettings() {
+            // Apply Theme
+            appBody.className = 'theme-' + state.themeIndex + ' ' + fonts[state.fontIndex];
+        }
+
+        // Auto Hide Toolbar
+        function resetTimer() {
+            clearTimeout(state.hideTimer);
+            if (!state.uiVisible) {
+                header.classList.remove('ui-hidden');
+                footer.classList.remove('ui-hidden');
+                state.uiVisible = true;
+            }
+            state.hideTimer = setTimeout(function() {
+                header.classList.add('ui-hidden');
+                footer.classList.add('ui-hidden');
+                state.uiVisible = false;
+            }, 6000);
+        }
+
+        // Event Listeners
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#footer')) return;
+            if (state.uiVisible) {
+                header.classList.add('ui-hidden');
+                footer.classList.add('ui-hidden');
+                state.uiVisible = false;
+            } else {
+                resetTimer();
+            }
+        });
+
+        document.getElementById('btnTheme').addEventListener('click', function(e) {
+            e.stopPropagation();
+            state.themeIndex = (state.themeIndex + 1) % themesCount;
+            applySettings();
+            resetTimer();
+        });
+
+        document.getElementById('btnFont').addEventListener('click', function(e) {
+            e.stopPropagation();
+            state.fontIndex = (state.fontIndex + 1) % fonts.length;
+            applySettings();
+            resetTimer();
+        });
+
+        document.getElementById('btnNight').addEventListener('click', function(e) {
+            e.stopPropagation();
+            state.isNight = !state.isNight;
+            if (state.isNight) {
+                clockMain.classList.add('night-dim');
+                header.classList.add('night-dim');
+            } else {
+                clockMain.classList.remove('night-dim');
+                header.classList.remove('night-dim');
+            }
+            resetTimer();
+        });
+
+        document.getElementById('btnSeconds').addEventListener('click', function(e) {
+            e.stopPropagation();
+            state.showSeconds = !state.showSeconds;
+            secondsEl.style.display = state.showSeconds ? 'inline' : 'none';
+            resetTimer();
+        });
+
+        document.getElementById('btnFormat').addEventListener('click', function(e) {
+            e.stopPropagation();
+            state.is24h = !state.is24h;
+            this.textContent = state.is24h ? '24H' : '12H';
+            updateClock();
+            resetTimer();
+        });
+
+        // Battery Status API (iOS / WebKit support)
+        if (navigator.getBattery) {
+            navigator.getBattery().then(function(battery) {
+                function updateBattery() {
+                    batteryBadge.textContent = Math.round(battery.level * 100) + '%';
+                }
+                updateBattery();
+                battery.addEventListener('levelchange', updateBattery);
+            }).catch(function() {
+                batteryBadge.style.display = 'none';
+            });
+        } else {
+            batteryBadge.style.display = 'none';
+        }
+
+        // Initialize
+        window.onload = function() {
+            updateClock();
+            applySettings();
+            setInterval(updateClock, 1000);
+            resetTimer();
+        };
+    </script>
+</body>
+</html>
